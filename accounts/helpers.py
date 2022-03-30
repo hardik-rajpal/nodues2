@@ -1,4 +1,5 @@
 """Helpers for login functions."""
+import json
 import requests
 from django.conf import settings
 from rest_framework.response import Response
@@ -81,6 +82,7 @@ def perform_login(auth_code, redir, request):
         'email': '200050048@iitb.ac.in'
     }"""
     username = profile_json['username']
+    #TODO:ASKDEV: are usernames always RNs?
     roll_no = profile_json['roll_number']
 
     # Check if a user exists with same username or roll number
@@ -103,7 +105,14 @@ def perform_login(auth_code, redir, request):
 
     except UserProfile.DoesNotExist:
         #TODO:pass correct params from sso data.
-        user_profile = UserProfile.objects.create(user=user, name=username)
+        user_profile = UserProfile.objects.create(
+            user=user,
+            name=username,
+            roll_no=roll_no,
+            profile_pic = profile_json['profile_picture'],
+            email=profile_json['email'],
+            contact_no=json.dumps(profile_json['contacts'])
+        )
 
     # Fill models with new data
     # fill_models_from_sso(user_profile, user, profile_json)

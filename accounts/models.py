@@ -21,7 +21,7 @@ class UserProfile(models.Model):
     profile_pic = models.URLField(null=True, blank=True)
 
     # Advanced info from SSO
-    contact_no = models.CharField(max_length=30, null=True, blank=True)
+    contact_no = models.CharField(max_length=300, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     # department = models.ForeignKey(Department, on_delete=models.CASCADE,)
     degree = models.CharField(max_length=200, null=True, blank=True)

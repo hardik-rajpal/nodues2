@@ -10,6 +10,7 @@ from accounts.models import UserProfile
 from accounts.models import AdminProfile
 from records.models import Department
 from records.models import Requirement
+from records.serializer import RequirementSerializer
 # from django import forms
 
 # class UploadFileForm(forms.Form):
@@ -18,36 +19,42 @@ from records.models import Requirement
 class RequirementViewSet(viewsets.ViewSet):
     
     
-    def get_requirements(request):
+    def get_requirements(viewset,request):
         """Get requirements."""
-
+        print(request.user)
+        roll_no = request.GET.get('userID')
+        # print(roll_no,type(roll_no))
+        # return Response({})
         # Check if the user is authenticated
-        if not request.user.is_authenticated:
-            return Response({"message": "not logged in"}, status=401)
+        #TODO:USer Auth with angular & rest in between
+        # if not request.user.is_authenticated:
+        #     return Response({"message": "not logged in"}, status=401)
 
         # Check if the user has a profile
         try:
             queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
-            user_profile = queryset.get(user=request.user)
+            user_profile = queryset.get(roll_no=roll_no)
         except UserProfile.DoesNotExist:
             return Response({'message': "UserProfile doesn't exist"}, status=500)
-
+        print('hi')
         roll_no = user_profile.roll_no
-        # if roll_no not in ADMIN_URLS:
-            # return Response({'message': "Does not have permissions"})
-
-        # Count this as a ping
+        adminAccountList = AdminProfile.objects.filter(user=user_profile)
+        
         user_profile.last_ping = timezone.now()
         user_profile.save(update_fields=['last_ping'])
+        
+        reqs = None
+        if(len(adminAccountList)>0):
+            reqs = Requirement.objects.filter(department=adminAccountList[0].department)    
+        else:
+            reqs = Requirement.objects.filter(roll_number=roll_no)
+        print('hi1')
+        if(reqs==None):
+            return {'data':[],'error':'Neither admin nor recorded student'}
+        
+        data = RequirementSerializer(reqs,many=True).data
+        return Response({'data':data})
 
-        users_from_department = user_profile.department.get_students()
-        user_requirement_data = users_from_department.get_requirements()
-        print(user_requirement_data)
-        # Return the details and nested profile
-        # return Response({
-        #     'sessionid': request.session.session_key,
-        #     'requirements' : user_requirement_data.json(),
-        # })
     def parse_data(datastr:str):
         datastr = datastr.replace('\r','')
         lines = datastr.split('\n')
