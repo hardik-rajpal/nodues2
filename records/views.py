@@ -1,3 +1,5 @@
+from asyncio import QueueEmpty
+import json
 from django.http import HttpRequest
 from django.shortcuts import render
 from rest_framework import viewsets
@@ -8,6 +10,8 @@ from accounts.serializer import UserProfileFullSerializer
 from django.utils import timezone
 from accounts.models import UserProfile
 from accounts.models import AdminProfile
+from records.models import Queries
+from records.serializer import QuerySerializer
 from records.models import Department
 from records.models import Requirement
 from records.serializer import RequirementSerializer
@@ -19,7 +23,7 @@ from records.serializer import RequirementSerializer
 class RequirementViewSet(viewsets.ViewSet):
     
     
-    def get_requirements(viewset,request):
+    def get_requirements(viewset,request:HttpRequest):
         """Get requirements."""
         print(request.user)
         roll_no = request.GET.get('userID')
@@ -103,3 +107,53 @@ class RequirementViewSet(viewsets.ViewSet):
         parsedData = RequirementViewSet.parse_data(data)
         RequirementViewSet.updateRecords(parsedData,department)
         return Response({'status':200})
+class QueriesViewSet(viewsets.ViewSet):
+    def getQueries(viewset,request):
+        roll_no = request.GET.get('userID')
+        try:
+            queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
+            user_profile = queryset.get(roll_no=roll_no)
+        except UserProfile.DoesNotExist:
+            return Response({'message': "UserProfile doesn't exist"}, status=500)
+        roll_no = user_profile.roll_no
+        adminAccountList = AdminProfile.objects.filter(user=user_profile)
+        queries = None
+        if(len(adminAccountList)==0):
+            reqs = Requirement.objects.filter(roll_number=roll_no)
+        else:
+            reqs = Requirement.objects.filter(department=adminAccountList[0].department)
+            # queries = Queries.objects.filter(requirement__in=reqs)
+        queries = Queries.objects.filter(requirement__in=reqs)
+        queries = QuerySerializer(queries,many=True).data
+        return Response({'data':queries})
+    def postQueryByStudent(viewset,request):
+        data = json.loads(request.body.decode())
+        #TODO:Check auth permissions
+        req = None
+        print(data)
+        try:
+            req = Requirement.objects.get(id=data['reqID'])
+        except:
+            return Response({'error':'Requirement not found'},500)
+        Queries.objects.create(requirement=req,comment=data['comment'],document_id=data['docID'],time_posted=timezone.now())
+        return Response({},200)
+    def respondToQuery(viewset,request):
+        data = json.loads(request.body.decode())
+        data['response']
+        data['queryID']
+        print(data)
+        roll_no = data['userID']
+        try:
+            queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
+            user_profile = queryset.get(roll_no=roll_no)
+        except UserProfile.DoesNotExist:
+            return Response({'message': "UserProfile doesn't exist"}, status=500)
+        roll_no = user_profile.roll_no
+        adminAccountList = AdminProfile.objects.filter(user=user_profile)
+        if(len(adminAccountList)==0):
+            return Response({'error':'No admin account found'},status=401)
+        q = Queries.objects.get(id=data['queryID'])
+        q.response = data['response']
+        q.status_check = data['accepted']
+        q.save()
+        return Response({},status=200)

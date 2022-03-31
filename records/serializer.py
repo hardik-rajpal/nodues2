@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework import serializers
+from records.models import Queries
 from records.models import Department
 from records.models import Requirement
 
@@ -15,4 +16,13 @@ class RequirementSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         repre = super().to_representation(instance)
         repre['department'] = Department.objects.get(id=repre['department']).name
+        return repre
+class QuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Queries
+        fields = '__all__'
+    def to_representation(self, instance):
+        repre = super().to_representation(instance)
+        repre['requirement'] = RequirementSerializer(Requirement.objects.get(id=repre['requirement'])).data
+        del repre['title']
         return repre

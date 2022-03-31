@@ -17,8 +17,12 @@ class Requirement(models.Model):
     def __str__(self):
         return self.department.name+':'+self.roll_number
 class Queries(models.Model):
-    title = models.CharField(max_length=50)
-    document_id = models.CharField(max_length=50)
-    status_check = models.BooleanField(default=False)
+    title = models.CharField(max_length=50,blank=True)
+    comment = models.TextField(max_length=500)
+    document_id = models.CharField(max_length=50,blank=True)
+    status_check = models.BooleanField(default=None,null=True)
     time_posted = models.DateTimeField()
+    response = models.TextField(max_length=500,default='')
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
+    def __str__(self):
+        return str(self.requirement)+'->'+self.comment[:min(len(self.comment),20)]
