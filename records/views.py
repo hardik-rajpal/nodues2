@@ -21,8 +21,10 @@ from records.serializer import RequirementSerializer
 #     title = forms.CharField(max_length=50)
 #     file = forms.FileField()
 class RequirementViewSet(viewsets.ViewSet):
-    
-    
+    def clearBalance(viewset, request):
+        reqID = request.GET.get('reqID')
+        print(reqID)
+        return Response({})
     def get_requirements(viewset,request:HttpRequest):
         """Get requirements."""
         print(request.user)

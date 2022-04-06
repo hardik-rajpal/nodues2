@@ -5,5 +5,6 @@ from records.views import RequirementViewSet
 
 urlpatterns = [
     path('/',RequirementViewSet.as_view({'get': 'get_requirements','post':'post_requirements'})),
-    path('/query',QueriesViewSet.as_view({'get':'getQueries','post':'postQueryByStudent','put':'respondToQuery'}))
+    path('/query',QueriesViewSet.as_view({'get':'getQueries','post':'postQueryByStudent','put':'respondToQuery'})),
+    path('/clear',RequirementViewSet.as_view({'get':'clearBalance'}))
 ]
