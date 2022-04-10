@@ -9,13 +9,13 @@ SSO_BAD_CERT = False
 
 DEBUG = True
 
-# ALLOWED_HOSTS = ['http://localhost:4200','localhost']
+ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL=True
 #SSO Config
 SSO_TOKEN_URL = 'https://gymkhana.iitb.ac.in/sso/oauth/token/'
 SSO_PROFILE_URL = 'https://gymkhana.iitb.ac.in/sso/user/api/user/?fields=first_name,last_name,type,profile_picture,sex,username,email,program,contacts,insti_address,secondary_emails,mobile,roll_number'
-SSO_CLIENT_ID = 'SITIaFUbY6basHIBQUxPCCt35ZXxD3zkqlOQM5Nz'
-SSO_CLIENT_ID_SECRET_BASE64 = 'U0lUSWFGVWJZNmJhc0hJQlFVeFBDQ3QzNVpYeEQzemtxbE9RTTVOejphRVdVZFlnUVFBYlZKN1psV0E5Mk1Oc2JKQXZJSmFnSXRKRG5uMzNEY3JYSnZGYm5pczFBUjlPZnNzYW40UTlScWRSVTRZZmhKZWZ4ZnVTMG5peXhtVUVIdE5pN09halpXdWxXcExjRzJyUGI0WGFFRm0zSFFzYTRkRU96TlJDNA=='
+SSO_CLIENT_ID = 'xh2HXSreEfLIGIMx7LN6HVJUqTTh5OPg1Wrf9Pgw'
+SSO_CLIENT_ID_SECRET_BASE64 = 'eGgySFhTcmVFZkxJR0lNeDdMTjZIVkpVcVRUaDVPUGcxV3JmOVBndzpmaktlWkh5RldXOHR0S25BODNWc0ZHQVpBcUxxbWVrajQ2WXpmbmFwTUVwZllRZTN6ekQ0Tlk0SWQyTjVMVjZXd1FyYXh6R1RSaG5pU1ZSOVp1ZGcyNXNnOGl3dmtERW5Nc0RGcVROZnRaalFFbE15MUJzRnJBMjh2cW42YVNKUw=='
 APPEND_SLASH = False
 # Password Login
 SSO_DEFAULT_REDIR = 'https://insti.app/login'

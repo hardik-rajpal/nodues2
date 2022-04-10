@@ -109,14 +109,15 @@ class RequirementViewSet(viewsets.ViewSet):
         # print()
         # print()
         userid = request.POST['userID']
+        
         department = None
         try:
             user = User.objects.get(username=userid)
             userpro = UserProfile.objects.get(user=user)
             admin = AdminProfile.objects.get(user=userpro)
             department = admin.department
-        except:
-            return {'error':'User does not exist'}
+        except Exception as e:
+            return Response({'error':str(e)+f' UserID: {userid}'},status=403)
         data = request.FILES['file'].read().decode('utf-8')
         parsedData = RequirementViewSet.parse_data(data)
         RequirementViewSet.updateRecords(parsedData,department)
