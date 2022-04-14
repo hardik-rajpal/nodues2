@@ -1,7 +1,8 @@
 from asyncio import QueueEmpty
 import json
+from xml.dom import NotFoundErr
 from django.core.paginator import Paginator
-from django.http import HttpRequest
+from django.http import FileResponse, HttpRequest
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -16,16 +17,8 @@ from records.serializer import QuerySerializer
 from records.models import Department
 from records.models import Requirement
 from records.serializer import RequirementSerializer
-<<<<<<< HEAD
 import hashlib
-=======
 
->>>>>>> 0ecb91ba0b2fdb540c57d9a43884d0aa04622cd0
-# from django import forms
-
-# class UploadFileForm(forms.Form):
-#     title = forms.CharField(max_length=50)
-#     file = forms.FileField()
 class RequirementViewSet(viewsets.ViewSet):
     def clearBalance(viewset, request):
         reqID = request.GET.get('reqID')
@@ -164,23 +157,33 @@ class QueriesViewSet(viewsets.ViewSet):
             'prev':page_obj.previous_page_number() if page_obj.has_previous() else None})
         return Response({'data':queries})
     def upload_file_queries(viewset,request):
-        file_received = request.FILES['file']
-        ext = file_received.name.split('.')[-1]    
-        def handle_uploaded_file(f,ext):
-            md5_hash = hashlib.md5()
-            # Read and update hash in chunks of 4K
-            for byte_block in iter(lambda: f.read(4096),b""):
-                md5_hash.update(byte_block)
-            print(md5_hash.hexdigest())
-            hash_val = md5_hash.hexdigest()
-            import os
-            print(os.getcwd())
-            destination = open('./records/storage/' + hash_val + '.' + ext, 'bw+')
-            for chunk in f.chunks():
-                destination.write(chunk)
-            return hash_val
-        MD5_hash = handle_uploaded_file(file_received,ext)
-        return Response({'docID':MD5_hash + '.' + ext})
+        try:
+            file_received = request.FILES['file']
+            ext = file_received.name.split('.')[-1]    
+            def handle_uploaded_file(f,ext):
+                md5_hash = hashlib.md5()
+                # Read and update hash in chunks of 4K
+                for byte_block in iter(lambda: f.read(4096),b""):
+                    md5_hash.update(byte_block)
+                # print(md5_hash.hexdigest())
+                hash_val = md5_hash.hexdigest()
+                import os
+                print(os.getcwd())
+                destination = open('./records/storage/' + hash_val + '.' + ext, 'bw+')
+                for chunk in f.chunks():
+                    destination.write(chunk)
+                return hash_val
+            MD5_hash = handle_uploaded_file(file_received,ext)
+            return Response({'docID':MD5_hash + '.' + ext})
+        except:
+            return Response({'error': 'failed to upload file'})
+    def get_uploaded_file(viewset,request:HttpRequest, pk):
+        import os
+        if os.path.exists('./records/storage/'+pk):
+            file = open('./records/storage/'+pk, 'rb')
+            return FileResponse(file)
+        else:
+            return Response({'message': 'file not found'})
     def postQueryByStudent(viewset,request):
         data = json.loads(request.body.decode())
         #TODO:Check auth permissions
