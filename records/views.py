@@ -20,6 +20,7 @@ from records.serializer import RequirementSerializer
 import hashlib
 
 class RequirementViewSet(viewsets.ViewSet):
+    authentication_classes = []
     def clearBalance(viewset, request):
         reqID = request.GET.get('reqID')
         req=None
@@ -119,7 +120,9 @@ class RequirementViewSet(viewsets.ViewSet):
         parsedData = RequirementViewSet.parse_data(data)
         RequirementViewSet.updateRecords(parsedData,department)
         return Response({'status':200})
+
 class QueriesViewSet(viewsets.ViewSet):
+    authentication_classes = []
     def getQueries(viewset,request:HttpRequest):
         print(request.user)
         roll_no = request.GET.get('userID')
