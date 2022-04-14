@@ -21,6 +21,7 @@ import hashlib
 
 class RequirementViewSet(viewsets.ViewSet):
     authentication_classes = []
+    permission_classes = ()
     def clearBalance(viewset, request):
         reqID = request.GET.get('reqID')
         req=None
@@ -123,6 +124,7 @@ class RequirementViewSet(viewsets.ViewSet):
 
 class QueriesViewSet(viewsets.ViewSet):
     authentication_classes = []
+    permission_classes = ()
     def getQueries(viewset,request:HttpRequest):
         print(request.user)
         roll_no = request.GET.get('userID')
