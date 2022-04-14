@@ -15,6 +15,7 @@ from records.serializer import QuerySerializer
 from records.models import Department
 from records.models import Requirement
 from records.serializer import RequirementSerializer
+import hashlib
 # from django import forms
 
 # class UploadFileForm(forms.Form):
@@ -128,6 +129,24 @@ class QueriesViewSet(viewsets.ViewSet):
         queries = Queries.objects.filter(requirement__in=reqs)
         queries = QuerySerializer(queries,many=True).data
         return Response({'data':queries})
+    def upload_file_queries(viewset,request):
+        file_received = request.FILES['file']
+        ext = file_received.name.split('.')[-1]    
+        def handle_uploaded_file(f,ext):
+            md5_hash = hashlib.md5()
+            # Read and update hash in chunks of 4K
+            for byte_block in iter(lambda: f.read(4096),b""):
+                md5_hash.update(byte_block)
+            print(md5_hash.hexdigest())
+            hash_val = md5_hash.hexdigest()
+            import os
+            print(os.getcwd())
+            destination = open('./records/storage/' + hash_val + '.' + ext, 'bw+')
+            for chunk in f.chunks():
+                destination.write(chunk)
+            return hash_val
+        MD5_hash = handle_uploaded_file(file_received,ext)
+        return Response({'docID':MD5_hash + '.' + ext})
     def postQueryByStudent(viewset,request):
         data = json.loads(request.body.decode())
         #TODO:Check auth permissions
