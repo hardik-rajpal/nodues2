@@ -9,7 +9,7 @@ SSO_BAD_CERT = False
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# ALLOWED_HOSTS = ['http://localhost:4200','localhost']
 CORS_ORIGIN_ALLOW_ALL=True
 #SSO Config
 SSO_TOKEN_URL = 'https://gymkhana.iitb.ac.in/sso/oauth/token/'

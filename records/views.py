@@ -1,5 +1,6 @@
 from asyncio import QueueEmpty
 import json
+from django.core.paginator import Paginator
 from django.http import HttpRequest
 from django.shortcuts import render
 from rest_framework import viewsets
@@ -15,7 +16,11 @@ from records.serializer import QuerySerializer
 from records.models import Department
 from records.models import Requirement
 from records.serializer import RequirementSerializer
+<<<<<<< HEAD
 import hashlib
+=======
+
+>>>>>>> 0ecb91ba0b2fdb540c57d9a43884d0aa04622cd0
 # from django import forms
 
 # class UploadFileForm(forms.Form):
@@ -24,8 +29,16 @@ import hashlib
 class RequirementViewSet(viewsets.ViewSet):
     def clearBalance(viewset, request):
         reqID = request.GET.get('reqID')
-        print(reqID)
-        return Response({})
+        req=None
+        try:
+            req = Requirement.objects.get(id=reqID)
+        except:
+            return Response({'detail':'Requirement with given id not found.'})
+        req:Requirement
+        req.balance=0;
+        req.comment+="; Cleared "+str(timezone.now())+"by (userID)"
+        req.save()
+        return Response({},status=200)
     def get_requirements(viewset,request:HttpRequest):
         """Get requirements."""
         print(request.user)
@@ -60,7 +73,9 @@ class RequirementViewSet(viewsets.ViewSet):
             return {'data':[],'error':'Neither admin nor recorded student'}
         
         data = RequirementSerializer(reqs,many=True).data
-        return Response({'data':data})
+        resp = Response({'data':data},headers={'Access-Control-Allow-Origin':True})
+        print(resp.headers)
+        return resp
 
     def parse_data(datastr:str):
         datastr = datastr.replace('\r','')
@@ -111,8 +126,12 @@ class RequirementViewSet(viewsets.ViewSet):
         RequirementViewSet.updateRecords(parsedData,department)
         return Response({'status':200})
 class QueriesViewSet(viewsets.ViewSet):
-    def getQueries(viewset,request):
+    def getQueries(viewset,request:HttpRequest):
+        print(request.user)
         roll_no = request.GET.get('userID')
+        responded = request.GET.get('responded')=='0'
+        print(responded)
+        pagenum=request.GET.get('page')
         try:
             queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
             user_profile = queryset.get(roll_no=roll_no)
@@ -126,8 +145,23 @@ class QueriesViewSet(viewsets.ViewSet):
         else:
             reqs = Requirement.objects.filter(department=adminAccountList[0].department)
             # queries = Queries.objects.filter(requirement__in=reqs)
-        queries = Queries.objects.filter(requirement__in=reqs)
+        status = [True,False]
+        # print(.__len__())
+        queries = Queries.objects.filter(requirement__in=reqs,status_check__in=status)
+        if not responded:
+            queries=Queries.objects.filter(status_check=None)
+
         queries = QuerySerializer(queries,many=True).data
+        # contact_list = Contact.objects.all()
+        paginator = Paginator(queries, 1) # Show 25 contacts per page.
+        page_number = request.GET.get('page')
+        
+        page_obj = paginator.get_page(pagenum)
+        return Response({
+            'data':page_obj.object_list,
+            'count':paginator.num_pages,
+            'next':page_obj.next_page_number() if page_obj.has_next() else None,
+            'prev':page_obj.previous_page_number() if page_obj.has_previous() else None})
         return Response({'data':queries})
     def upload_file_queries(viewset,request):
         file_received = request.FILES['file']
