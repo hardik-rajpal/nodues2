@@ -38,6 +38,7 @@ class UserProfile(models.Model):
         return self.requirements.all()
 class AdminProfile(models.Model):
     user = models.ForeignKey(UserProfile,on_delete=models.CASCADE)
+    is_super_user = models.BooleanField(default=False)
     department=models.OneToOneField(Department,on_delete=models.DO_NOTHING) 
     def __str__(self):
         return self.department.name   
