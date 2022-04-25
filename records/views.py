@@ -4,6 +4,7 @@ from xml.dom import NotFoundErr
 from django.core.paginator import Paginator
 from django.http import FileResponse, HttpRequest
 from django.shortcuts import render
+from django.contrib.sessions.models import Session
 from rest_framework import viewsets
 from rest_framework.response import Response
 from setuptools import Require
@@ -12,6 +13,7 @@ from accounts.serializer import UserProfileFullSerializer
 from django.utils import timezone
 from accounts.models import UserProfile
 from accounts.models import AdminProfile
+from accounts.helpers import userFromRequestByCookies
 from records.models import Queries
 from records.serializer import QuerySerializer
 from records.models import Department
@@ -22,7 +24,7 @@ import hashlib
 class RequirementViewSet(viewsets.ViewSet):
     authentication_classes = []
     permission_classes = ()
-    def clearBalance(viewset, request):
+    def clearBalance(viewset, request:HttpRequest):
         reqID = request.GET.get('reqID')
         req=None
         try:
@@ -37,21 +39,13 @@ class RequirementViewSet(viewsets.ViewSet):
     def get_requirements(viewset,request:HttpRequest):
         """Get requirements."""
         print(request.user)
-        roll_no = request.GET.get('userID')
-        # print(roll_no,type(roll_no))
-        # return Response({})
-        # Check if the user is authenticated
-        #TODO:USer Auth with angular & rest in between
-        # if not request.user.is_authenticated:
-        #     return Response({"message": "not logged in"}, status=401)
-
-        # Check if the user has a profile
+        userobj = userFromRequestByCookies(request)
         try:
             queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
-            user_profile = queryset.get(roll_no=roll_no)
+            user_profile = queryset.get(user=userobj)
         except UserProfile.DoesNotExist:
             return Response({'message': "UserProfile doesn't exist"}, status=500)
-        print('hi')
+        # print('hi')
         roll_no = user_profile.roll_no
         adminAccountList = AdminProfile.objects.filter(user=user_profile)
         
@@ -107,8 +101,9 @@ class RequirementViewSet(viewsets.ViewSet):
         # UploadFileForm(request.POST)
         # print()
         # print()
-        userid = request.POST['userID']
-        
+        # userid = request.POST['userID']
+        userobj = userFromRequestByCookies(request)
+        userid = UserProfile.objects.get(user=userobj).roll_no
         department = None
         try:
             user = User.objects.get(username=userid)
@@ -126,17 +121,12 @@ class QueriesViewSet(viewsets.ViewSet):
     authentication_classes = []
     permission_classes = ()
     def getQueries(viewset,request:HttpRequest):
-        print(request.user)
-        roll_no = request.GET.get('userID')
-        responded = request.GET.get('responded')=='0'
-        print(responded)
-        pagenum=request.GET.get('page')
-        try:
-            queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
-            user_profile = queryset.get(roll_no=roll_no)
-        except UserProfile.DoesNotExist:
-            return Response({'message': "UserProfile doesn't exist"}, status=500)
+        logs = ''
+        userobj = userFromRequestByCookies(request)
+        user_profile = UserProfile.objects.get(user=userobj)
         roll_no = user_profile.roll_no
+        responded = request.GET.get('responded')=='0'
+        pagenum=request.GET.get('page')
         adminAccountList = AdminProfile.objects.filter(user=user_profile)
         queries = None
         if(len(adminAccountList)==0):
@@ -154,14 +144,12 @@ class QueriesViewSet(viewsets.ViewSet):
         # contact_list = Contact.objects.all()
         paginator = Paginator(queries, 1) # Show 25 contacts per page.
         page_number = request.GET.get('page')
-        
         page_obj = paginator.get_page(pagenum)
         return Response({
             'data':page_obj.object_list,
             'count':paginator.num_pages,
             'next':page_obj.next_page_number() if page_obj.has_next() else None,
             'prev':page_obj.previous_page_number() if page_obj.has_previous() else None})
-        return Response({'data':queries})
     def upload_file_queries(viewset,request):
         try:
             file_received = request.FILES['file']
@@ -206,7 +194,8 @@ class QueriesViewSet(viewsets.ViewSet):
         data['response']
         data['queryID']
         print(data)
-        roll_no = data['userID']
+        userobj= userFromRequestByCookies(request)
+        roll_no = UserProfile.objects.get(user=userobj).roll_no
         try:
             queryset = UserProfileFullSerializer.setup_eager_loading(UserProfile.objects)
             user_profile = queryset.get(roll_no=roll_no)

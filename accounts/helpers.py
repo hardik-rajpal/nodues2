@@ -1,5 +1,6 @@
 """Helpers for login functions."""
 import json
+from django.http import HttpRequest
 import requests
 from django.conf import settings
 from rest_framework.response import Response
@@ -9,7 +10,14 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from accounts.serializer import UserProfileFullSerializer
 from accounts.models import AdminProfile
-
+from django.contrib.sessions.models import Session
+def userFromRequestByCookies(request:HttpRequest):
+    sesskey = request.COOKIES.get('sessionid')
+    sess = Session.objects.get(session_key=sesskey)
+    sessdata = sess.get_decoded()
+    uid = sessdata.get('_auth_user_id')
+    tempuser = User.objects.get(id=uid)
+    return tempuser
 def user_serializer(data):
     user = User()
     user.first_name = data['first_name']
