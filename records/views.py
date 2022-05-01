@@ -125,20 +125,20 @@ class QueriesViewSet(viewsets.ViewSet):
         userobj = userFromRequestByCookies(request)
         user_profile = UserProfile.objects.get(user=userobj)
         roll_no = user_profile.roll_no
-        responded = request.GET.get('responded')=='0'
+        responded = request.GET.get('responded')=='1'
         pagenum=request.GET.get('page')
         adminAccountList = AdminProfile.objects.filter(user=user_profile)
         queries = None
+        reqs = None
         if(len(adminAccountList)==0):
             reqs = Requirement.objects.filter(roll_number=roll_no)
         else:
             reqs = Requirement.objects.filter(department=adminAccountList[0].department)
             # queries = Queries.objects.filter(requirement__in=reqs)
-        status = [True,False]
-        # print(.__len__())
-        queries = Queries.objects.filter(requirement__in=reqs,status_check__in=status)
         if not responded:
-            queries=Queries.objects.filter(status_check=None)
+            queries=Queries.objects.filter(requirement__in=reqs,status_check=None)
+        else:
+            queries = Queries.objects.filter(requirement__in=reqs,status_check__in=[True,False])
 
         queries = QuerySerializer(queries,many=True).data
         # contact_list = Contact.objects.all()
@@ -146,6 +146,10 @@ class QueriesViewSet(viewsets.ViewSet):
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(pagenum)
         return Response({
+            'rn':roll_no,
+            'rir':responded,
+            'rawqs':queries,
+            'reqs':RequirementSerializer(reqs,many=True).data,
             'data':page_obj.object_list,
             'count':paginator.num_pages,
             'next':page_obj.next_page_number() if page_obj.has_next() else None,
