@@ -1,5 +1,6 @@
 from asyncio import QueueEmpty
 import json
+from turtle import up
 from xml.dom import NotFoundErr
 from django.core.paginator import Paginator
 from django.http import FileResponse, HttpRequest
@@ -25,6 +26,15 @@ class RequirementViewSet(viewsets.ViewSet):
     authentication_classes = []
     permission_classes = ()
     def clearBalance(viewset, request:HttpRequest):
+        userobj = userFromRequestByCookies(request)
+        try:
+            upro = UserProfile.objects.get(userobj)
+        except:
+            return Response({'message':'User profile does not exist.'},status=403)
+        upro:UserProfile
+        adminpros = AdminProfile.objects.filter(user=upro);
+        if(adminpros.__len__()==0):
+            return Response({'message':'Admin Profile does not exist.'},status=403)
         reqID = request.GET.get('reqID')
         req=None
         try:
@@ -33,7 +43,9 @@ class RequirementViewSet(viewsets.ViewSet):
             return Response({'detail':'Requirement with given id not found.'})
         req:Requirement
         req.balance=0;
-        req.comment+="; Cleared "+str(timezone.now())+"by (userID)"
+        t_temp = timezone.now()
+        t_temp.microsecond = 0;
+        req.comment+=f"; Cleared ${t_temp.isoformat()}by (${upro.roll_no})"
         req.save()
         return Response({},status=200)
     def get_requirements(viewset,request:HttpRequest):
