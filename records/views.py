@@ -1,14 +1,10 @@
-from asyncio import QueueEmpty
 import json
 from turtle import up
-from xml.dom import NotFoundErr
 from django.core.paginator import Paginator
 from django.http import FileResponse, HttpRequest
-from django.shortcuts import render
 from django.contrib.sessions.models import Session
 from rest_framework import viewsets
 from rest_framework.response import Response
-from setuptools import Require
 from django.contrib.auth.models import User
 from accounts.serializer import UserProfileFullSerializer
 from django.utils import timezone
@@ -28,7 +24,7 @@ class RequirementViewSet(viewsets.ViewSet):
     def clearBalance(viewset, request:HttpRequest):
         userobj = userFromRequestByCookies(request)
         try:
-            upro = UserProfile.objects.get(userobj)
+            upro = UserProfile.objects.get(user=userobj)
         except:
             return Response({'message':'User profile does not exist.'},status=403)
         upro:UserProfile
@@ -44,8 +40,7 @@ class RequirementViewSet(viewsets.ViewSet):
         req:Requirement
         req.balance=0;
         t_temp = timezone.now()
-        t_temp.microsecond = 0;
-        req.comment+=f"; Cleared ${t_temp.isoformat()}by (${upro.roll_no})"
+        req.comment+=f"; Cleared at {' '.join(t_temp.isoformat().split('.')[0].split('T'))} by {upro.roll_no}"
         req.save()
         return Response({},status=200)
     def get_requirements(viewset,request:HttpRequest):
@@ -153,8 +148,7 @@ class QueriesViewSet(viewsets.ViewSet):
             queries = Queries.objects.filter(requirement__in=reqs,status_check__in=[True,False])
 
         queries = QuerySerializer(queries,many=True).data
-        # contact_list = Contact.objects.all()
-        paginator = Paginator(queries, 1) # Show 25 contacts per page.
+        paginator = Paginator(queries, 2)
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(pagenum)
         return Response({
